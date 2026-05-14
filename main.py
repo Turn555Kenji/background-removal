@@ -50,7 +50,8 @@ def temporal_averaging(files, threshold: int = 30, save_at: list[int] = []):
         yield mask
 
 
-def temporal_median(files, threshold: int = 30, save_at: list[int] = []):
+def temporal_median(files, threshold: int = 30, save_at: list[int] = [], 
+                    limited_window: bool = False, max_window: int = 30):
     frames = iter_frames(files)
 
     first = next(frames)
@@ -70,6 +71,9 @@ def temporal_median(files, threshold: int = 30, save_at: list[int] = []):
 
         new_frame = frame[:, :, np.newaxis]
         window = np.concatenate([window, new_frame], axis=2)
+
+        if limited_window and window.shape[2] > max_window:
+            window = window[:, :, -max_window:]
 
         yield mask
 
@@ -105,10 +109,10 @@ def iter_frames(files):
     
 if __name__ == "__main__":
 
-    files, w, h = open_frames_dir("assets/birds")
-    save_at = [1, 20, 40, 68]  # sample frames, adjust per image
+    files, w, h = open_frames_dir("assets/flock")
+    save_at = [1, 80, 160, 220]  # sample frames, adjust per image
 
-    for i, mask in enumerate(temporal_averaging(files, threshold=30, save_at=save_at)):
+    for i, mask in enumerate(temporal_median(files, threshold=30, save_at=save_at)):
         cv2.imshow("Foreground Mask", mask)
         if cv2.waitKey(30) & 0xFF == ord('q'):
             break
